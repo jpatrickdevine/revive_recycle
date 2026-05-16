@@ -1,0 +1,27 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Model weights (large binary files — download separately)
+*.pt
+*.pth
+*.onnx
+
+# Uploaded / processed images (not sample images in images/)
+/tmp/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
