@@ -1,2 +1,5 @@
-pandas
+openai
+pillow
+ultralytics
+python-dotenv
 streamlit
