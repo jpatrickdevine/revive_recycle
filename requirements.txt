@@ -3,3 +3,5 @@ pillow
 ultralytics
 python-dotenv
 streamlit
+requests
+zipcodes
