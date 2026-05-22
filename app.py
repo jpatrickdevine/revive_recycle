@@ -1,5 +1,9 @@
 import streamlit as st
 import time
+from dotenv import load_dotenv
+from recycle_service.src.services.recycling_service import RecyclingService
+
+load_dotenv()
 
 # ----------------------------------------------------------------------------
 # PAGE CONFIG AND TITLE
@@ -27,6 +31,12 @@ if "step1_response" not in st.session_state:
     st.session_state.step1_response = ""
 if "step3_response" not in st.session_state:
     st.session_state.step3_response = ""
+if "zip_code" not in st.session_state:
+    st.session_state.zip_code = ""
+if "recycle_results" not in st.session_state:
+    st.session_state.recycle_results = None
+if "recycle_service" not in st.session_state:
+    st.session_state.recycle_service = RecyclingService()
 
 # ----------------------------------------------------------------------------
 # "PROCESSING..." FUNCTIONS
@@ -157,23 +167,56 @@ elif st.session_state.step == 4:
         unsafe_allow_html=True,
     )
 
-    
-    # Placeholder integration point for recycle-service code.
-    # Replace this with actual service logic or script call.
     if not st.session_state.verdict:
         st.session_state.verdict = "Recycle"
 
     st.markdown("**Verdict:**")
     st.success(st.session_state.verdict)
 
-    # If verdict is "Recycle", show additional info (placeholder for now)
     if st.session_state.verdict == "Recycle":
-        # make call to recycle-service code here and display results instead of placeholder text
-        
-        st.markdown("**Recycling Options:**")
-        st.markdown(
-            "- Option 1: ...\n- Option 2: ...\n\n*(Replace with actual options from recycle-service)*"
+        st.markdown("---")
+        st.markdown("### Recycling Options")
+
+        zip_input = st.text_input(
+            "Enter your zip code to find nearby recycling centers:",
+            value=st.session_state.zip_code,
+            max_chars=5,
+            placeholder="e.g. 10001",
         )
+
+        if st.button("Find Recycling Options"):
+            if not zip_input.strip() or not zip_input.strip().isdigit() or len(zip_input.strip()) != 5:
+                st.warning("Please enter a valid 5-digit US zip code.")
+            else:
+                st.session_state.zip_code = zip_input.strip()
+                with st.spinner("Finding recycling options..."):
+                    st.session_state.recycle_results = (
+                        st.session_state.recycle_service.find_recycling_options(
+                            st.session_state.device_id_input,
+                            st.session_state.zip_code,
+                        )
+                    )
+                st.rerun()
+
+        if st.session_state.recycle_results:
+            results = st.session_state.recycle_results
+
+            # Takeback programs (brand-specific + universal)
+            programs = results.get("takeback_programs", [])
+            if programs:
+                st.markdown("**Trade-In & Drop-Off Programs**")
+                for program in programs:
+                    st.markdown(f"- [{program['name']}]({program['url']})")
+
+            # Nearby e-waste centers
+            centers = results.get("nearby_centers", [])
+            if centers:
+                st.markdown("**Nearby E-Waste Recycling Centers**")
+                for center in centers:
+                    line = f"**{center['name']}** — {center['address']}"
+                    if center.get("phone"):
+                        line += f" · {center['phone']}"
+                    st.markdown(line)
     
     st.divider()
 
@@ -188,4 +231,6 @@ elif st.session_state.step == 4:
             st.session_state.device_id_input = ""
             st.session_state.condition_input = "Select a condition"
             st.session_state.verdict = ""
+            st.session_state.zip_code = ""
+            st.session_state.recycle_results = None
             st.rerun()
